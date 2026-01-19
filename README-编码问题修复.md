@@ -2,7 +2,24 @@
 
 ## 问题描述
 
-在PowerShell环境下，Git提交消息中的中文可能出现乱码。这是因为PowerShell的编码处理与Git不完全兼容。
+在PowerShell环境下，Git提交消息中的中文可能出现乱码。
+
+### 问题根源
+
+1. **编码不匹配**：
+   - Windows PowerShell默认使用GBK/GB2312编码（代码页936）
+   - Git配置为UTF-8编码
+   - 当在PowerShell中直接传递中文字符串给Git时，编码不匹配导致乱码
+
+2. **具体表现**：
+   - 提交消息在GitHub上显示为乱码（如"鏢肺擴"应该是"删除"）
+   - 本地`git log`也可能显示乱码
+   - 但文件内容本身不受影响
+
+3. **为什么会出现**：
+   - 在PowerShell中直接使用 `git commit -m "中文消息"` 时
+   - PowerShell将中文字符串按GBK编码传递给Git
+   - Git期望UTF-8编码，导致解码错误
 
 ## 解决方案
 
@@ -42,15 +59,49 @@ git push --force-with-lease origin master
 
 ## 预防措施
 
-1. **配置Git编码**（已配置）：
-   ```bash
-   git config --global i18n.commitencoding utf-8
-   git config --global i18n.logoutputencoding utf-8
-   ```
+### 1. 配置Git编码（已配置）
+```bash
+git config --global i18n.commitencoding utf-8
+git config --global i18n.logoutputencoding utf-8
+```
 
-2. **使用临时文件提交**：避免在PowerShell命令行中直接传递中文字符串
+### 2. 使用自动化脚本（推荐）⭐
 
-3. **在Git Bash中提交**：对于包含中文的提交，建议在Git Bash中操作
+已创建两个PowerShell脚本，自动处理UTF-8编码：
+
+**提交新更改**：
+```powershell
+.\git-commit-utf8.ps1 "feat: 你的提交消息"
+```
+
+**修改最新提交**：
+```powershell
+.\git-commit-amend-utf8.ps1 "feat: 修改后的提交消息"
+```
+
+这些脚本会自动：
+- 设置UTF-8编码
+- 创建临时文件（UTF-8编码）
+- 使用临时文件提交
+- 自动清理临时文件
+
+### 3. 手动使用临时文件
+
+如果不想使用脚本，可以手动操作：
+```powershell
+# 1. 创建临时文件（UTF-8编码）
+"feat: 你的提交消息" | Out-File -Encoding UTF8 commit_msg.txt
+
+# 2. 使用文件提交
+git commit -F commit_msg.txt
+
+# 3. 删除临时文件
+Remove-Item commit_msg.txt
+```
+
+### 4. 在Git Bash中提交
+
+对于包含中文的提交，也可以在Git Bash中操作（推荐用于修复历史提交）
 
 ## 当前状态
 

@@ -1,0 +1,10 @@
+# Git UTF-8编码配置
+# 使用方法: git config --global --add include.path .gitconfig-utf8
+
+[i18n]
+    commitencoding = utf-8
+    logoutputencoding = utf-8
+
+[core]
+    quotepath = false
+    autocrlf = false
